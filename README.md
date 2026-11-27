@@ -46,8 +46,8 @@ python_shell_sort/
 │
 ├── analisis_shell.py              # Script principal modular y documentado
 ├── README.md                      # Documentación metodológica y guía de uso
-├── resultados_shell_Mac.csv       # Tiempos de ejecución obtenidos en Mac
-├── resultados_shell_Windows.csv   # Tiempos de ejecución obtenidos en Windows
+├── resultados_shell_Mac.csv       # Tiempos de ejecución reales obtenidos en Mac
+├── resultados_shell_Windows.csv   # Tiempos reales (se genera al correr en Windows)
 │
 ├── graficas_Mac/                  # Gráficas generadas para el entorno Mac (300 DPI)
 │   ├── grafica_mejor_caso_Mac.png
@@ -55,10 +55,10 @@ python_shell_sort/
 │   ├── grafica_peor_caso_Mac.png
 │   └── grafica_combinada_Mac.png
 │
-├── graficas_Windows/              # Gráficas generadas para el entorno Windows (300 DPI)
+├── graficas_Windows/              # Gráficas generadas para Windows (al correr en Windows)
 │   └── ...
 │
-└── graficas_comparativa/          # Gráficas comparativas superpuestas (300 DPI)
+└── graficas_comparativa/          # Se genera automáticamente al detectar ambos CSVs
     ├── comparativa_mejor_caso.png
     ├── comparativa_caso_promedio.png
     └── comparativa_peor_caso.png

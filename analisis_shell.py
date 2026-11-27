@@ -16,7 +16,19 @@ import platform
 
 # Configuración del directorio de caché de Matplotlib para evitar advertencias de permisos
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    import sys
+    print("\n" + "=" * 78)
+    print(" [ERROR DE DEPENDENCIAS] La librería 'matplotlib' no está instalada.")
+    print("=" * 78)
+    print(" Para instalarla, ejecuta en tu terminal:")
+    print("    pip install matplotlib")
+    print(" o bien:")
+    print("    pip3 install matplotlib")
+    print("=" * 78 + "\n")
+    sys.exit(1)
 
 # ==============================================================================
 # 1. PARÁMETROS GLOBALES DE CONFIGURACIÓN
@@ -384,12 +396,15 @@ def extraer_nombre_entorno_de_archivo(ruta: str) -> str:
     return nombre if nombre else "Desconocido"
 
 
-def ejecutar_comparativa_entornos() -> None:
+def ejecutar_comparativa_entornos(entorno_actual: str = "") -> None:
     """
-    Busca archivos CSV que sigan el patrón 'resultados_shell_*.csv'.
-    Si encuentra 2 o más, realiza la comparativa del Principio de Invarianza:
-      - Imprime tablas comparativas con la razón c = t_mas_lento / t_mas_rapido.
-      - Genera 3 gráficas comparativas superpuestas en 'graficas_comparativa/'.
+    Revisa si existen datos de Windows y Mac (o de dos entornos distintos).
+    Si ambos existen:
+      - Imprime las tablas comparativas con la razón c = t_mas_lento / t_mas_rapido.
+      - Genera automáticamente las 3 gráficas comparativas en 'graficas_comparativa/'.
+    Si solo existe el entorno local:
+      - Notifica amigablemente que se completó el registro local y explica cómo
+        desbloquear la gráfica comparativa al obtener los datos reales de Windows.
     """
     archivos_csv = sorted(glob.glob("resultados_shell_*.csv"))
     
@@ -397,18 +412,31 @@ def ejecutar_comparativa_entornos() -> None:
     print("      MÓDULO DE COMPARACIÓN DE RENDIMIENTO (PRINCIPIO DE INVARIANZA)")
     print("=" * 78)
     
-    if len(archivos_csv) < 2:
-        print(f"Se encontraron {len(archivos_csv)} archivo(s) CSV en el directorio actual: {archivos_csv}")
-        print("Para generar la comparativa automática (ej. Mac vs Windows):")
-        print("  1. Ejecuta este programa en el primer entorno (ej. Mac).")
-        print("  2. Ejecuta este programa en el segundo entorno (ej. Windows).")
-        print("  3. Coloca ambos archivos CSV ('resultados_shell_Mac.csv' y 'resultados_shell_Windows.csv')")
-        print("     en la misma carpeta y vuelve a ejecutar este script con SOLO_COMPARAR = True.")
+    csv_mac = "resultados_shell_Mac.csv"
+    csv_win = "resultados_shell_Windows.csv"
+    
+    tiene_mac = os.path.exists(csv_mac)
+    tiene_win = os.path.exists(csv_win)
+    
+    if tiene_mac and tiene_win:
+        archivo_1, archivo_2 = csv_mac, csv_win
+    elif len(archivos_csv) >= 2:
+        archivo_1, archivo_2 = archivos_csv[0], archivos_csv[1]
+    else:
+        print(f" Estado: Datos del entorno actual '{entorno_actual or 'local'}' almacenados.")
+        if not tiene_win:
+            print(f" [AVISO] Aún no existen datos reales de Windows ('{csv_win}').")
+            print(" -> Para generar la comparativa Mac vs. Windows:")
+            print("    1. Ejecuta 'analisis_shell.py' en tu máquina con Windows.")
+            print(f"    2. Copia el archivo '{csv_win}' generado en Windows a este directorio.")
+            print("    3. Vuelve a ejecutar este script (o actívalo con SOLO_COMPARAR = True);")
+            print("       la aplicación detectará los datos de Windows y generará automáticamente")
+            print("       las tablas y las 3 gráficas comparativas en 'graficas_comparativa/'.")
+        elif not tiene_mac:
+            print(f" [AVISO] Falta el archivo de Mac ('{csv_mac}').")
         print("=" * 78 + "\n")
         return
 
-    # Usamos los dos primeros archivos encontrados (o Mac y Windows preferentemente)
-    archivo_1, archivo_2 = archivos_csv[0], archivos_csv[1]
     entorno_1 = extraer_nombre_entorno_de_archivo(archivo_1)
     entorno_2 = extraer_nombre_entorno_de_archivo(archivo_2)
     
@@ -501,7 +529,7 @@ def main() -> None:
     # 2. Si SOLO_COMPARAR está activo, salta directamente a la comparativa de CSVs
     if SOLO_COMPARAR:
         print("[MODO SOLO COMPARAR ACTIVO]: Omitiendo mediciones de laboratorio...")
-        ejecutar_comparativa_entornos()
+        ejecutar_comparativa_entornos(entorno)
         return
 
     # 3. Simulación didáctica de pasadas (Sección 4.2)
@@ -519,8 +547,8 @@ def main() -> None:
     # 7. Generación de gráficas individuales y combinada (300 DPI)
     generar_graficas_entorno(resultados, entorno)
     
-    # 8. Módulo comparativo (si existe otro CSV disponible en el directorio)
-    ejecutar_comparativa_entornos()
+    # 8. Módulo comparativo (revisa si existen datos del otro entorno para comparar)
+    ejecutar_comparativa_entornos(entorno)
 
 
 if __name__ == "__main__":
